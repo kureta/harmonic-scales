@@ -61,26 +61,21 @@ class ChromaticNecklace:
     def __repr__(self):
         return f'{self.name} ({self.color}): {self.state}'
 
-    def swapped_state(self, idx):
+    def sharpened_state(self, idx):
         swapped = self.state.copy()
-        swapped[idx], swapped[idx + 1] = swapped[idx + 1], swapped[idx]
+        swapped[idx], swapped[(idx + 1) % len(swapped)] = 0, 1
         return swapped
 
     def movable(self, idx):
-        """* If two adjacent places on the 12-necklace have beads in them, then we cannot move (they are both 1)
-        * If none have beads (both 0), again, we cannot move.
-        * If they are `(0, 1)`, then swapping corresponds to moving the bead at `idx+1` to the empty space on its left.
-        * If they are `(1, 0)` it means moving the bead at `idx` up to the empty space on its right.
-        * Also the new state must be harmonic: distance between every other bead is either 3 or 4."""
-        if self.state[idx] == self.state[(idx + 1) % len(self.state)]:
+        if not (self.state[idx] == 1 and self.state[(idx + 1) % len(self.state)] == 0):
             return False
-        swapped = self.swapped_state(idx)
+        swapped = self.sharpened_state(idx)
         return BinaryNecklace(swapped).is_harmonic
 
     def move(self, idx):
         if not self.movable(idx):
             raise ValueError
-        swapped = self.swapped_state(idx)
+        swapped = self.sharpened_state(idx)
         swapped = BinaryNecklace(swapped)
         for name, shape in scales.items():
             if swapped == shape:
@@ -92,6 +87,7 @@ def main():
     chrome = ChromaticNecklace('major', 0)
     print('Initial necklace:')
     print(chrome)
+    print('==================================')
     print('Adjacent necklaces:')
     for idx in range(12):
         if chrome.movable(idx):
