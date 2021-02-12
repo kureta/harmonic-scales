@@ -23,6 +23,18 @@ def get_transposition(x, y):
     raise ValueError
 
 
+# TODO: use indice notation in reference to base scale family
+def to_indice_notation(x):
+    return [idx for idx, val in enumerate(x) if val == 1]
+
+
+def to_binary_notation(x):
+    binary = 12 * [0]
+    for val in x:
+        binary[val] = 1
+    return binary
+
+
 class BinaryNecklace(tuple):
     def __eq__(self, other):
         for idx in range(len(self)):
@@ -61,16 +73,15 @@ class ChromaticNecklace:
     def __repr__(self):
         return f'{self.name} ({self.color}): {self.state}'
 
-    def sharpened_state(self, idx):
-        swapped = self.state.copy()
-        swapped[idx], swapped[(idx + 1) % len(swapped)] = 0, 1
-        return swapped
+    def sharpened_state(self, note):
+        indice_form = to_indice_notation(self.state)
+        indice_form[note] += 1
+        indice_form[note] %= 12
+        return to_binary_notation(indice_form)
 
     def movable(self, idx):
-        if not (self.state[idx] == 1 and self.state[(idx + 1) % len(self.state)] == 0):
-            return False
-        swapped = self.sharpened_state(idx)
-        return BinaryNecklace(swapped).is_harmonic
+        sharpened = self.sharpened_state(idx)
+        return BinaryNecklace(sharpened).is_harmonic
 
     def move(self, idx):
         if not self.movable(idx):
@@ -89,7 +100,7 @@ def main():
     print(chrome)
     print('==================================')
     print('Adjacent necklaces:')
-    for idx in range(12):
+    for idx in range(7):
         if chrome.movable(idx):
             print(f'move {idx}')
             print(chrome.move(idx))
