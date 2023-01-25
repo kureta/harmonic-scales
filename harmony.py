@@ -2,14 +2,18 @@ major = [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
 melodic_minor = [1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 harmonic_minor = [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1]
 harmonic_major = [1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1]
-whole_tone = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]  # has only 2 colors (transpositions)
+wholetone = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]  # has only 2 colors (transpositions)
 octatonic = [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1]  # 3 colors
 augmented = [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]  # 4 colors
 
 # All proper scales have 12 colors
 proper_scales = [major, melodic_minor, harmonic_major, harmonic_minor]
-improper_scales = [whole_tone, octatonic, augmented]
+improper_scales = [wholetone, octatonic, augmented]
 all_scales = proper_scales + improper_scales
+
+
+# TODO: There are only 3 operators for proper scales: b3, b6, b7
+#       They are all their own onverses
 
 
 def transpose(x, n):
@@ -21,18 +25,6 @@ def get_transposition(x, y):
         if transpose(y, idx) == x:
             return idx
     raise ValueError
-
-
-# TODO: use indice notation in reference to base scale family
-def to_indice_notation(x):
-    return [idx for idx, val in enumerate(x) if val == 1]
-
-
-def to_binary_notation(x):
-    binary = 12 * [0]
-    for val in x:
-        binary[val] = 1
-    return binary
 
 
 class BinaryNecklace(tuple):
@@ -58,6 +50,9 @@ scales = {
     'melodic_minor': BinaryNecklace(melodic_minor),
     'harmonic_major': BinaryNecklace(harmonic_major),
     'harmonic_minor': BinaryNecklace(harmonic_minor),
+    'wholetone': BinaryNecklace(wholetone),
+    'augmented': BinaryNecklace(augmented),
+    'octatonic': BinaryNecklace(octatonic),
 }
 
 
@@ -73,35 +68,61 @@ class ChromaticNecklace:
     def __repr__(self):
         return f'{self.name} ({self.color}): {self.state}'
 
-    def sharpened_state(self, note):
-        indice_form = to_indice_notation(self.state)
-        indice_form[note] += 1
-        indice_form[note] %= 12
-        return to_binary_notation(indice_form)
+    def sharpened_state(self, idx):
+        state = self.state.copy()
+        state[idx], state[(idx + 1) % 12] = 0, 1
+        return state
 
-    def movable(self, idx):
+    @staticmethod
+    def flipped_state(idx, state):
+        new_state = state.copy()
+        new_state[idx] = 1 - new_state[idx]
+        return new_state
+
+    def is_movable(self, idx):
+        if self.state[idx] != 1 or self.state[(idx + 1) % 12] != 0:
+            return False
         sharpened = self.sharpened_state(idx)
-        return BinaryNecklace(sharpened).is_harmonic
+        is_harmonic = BinaryNecklace(sharpened).is_harmonic
+        # try adding or removing a note
+        if not is_harmonic:
+            for i, v in enumerate(sharpened):
+                if i == idx or i == (idx + 1) % 12:
+                    continue
+                if BinaryNecklace(self.flipped_state(i, sharpened)).is_harmonic:
+                    return True
+            return False
+        return True
 
     def move(self, idx):
-        if not self.movable(idx):
+        if not self.is_movable(idx):
             raise ValueError
-        swapped = self.sharpened_state(idx)
-        swapped = BinaryNecklace(swapped)
+        sharpened = self.sharpened_state(idx)
+        is_harmonic = BinaryNecklace(sharpened).is_harmonic
+        # try adding or removing a note
+        if not is_harmonic:
+            for i, v in enumerate(sharpened):
+                if i == idx or i == (idx + 1) % 12:
+                    continue
+                new_state = self.flipped_state(i, sharpened)
+                if BinaryNecklace(new_state).is_harmonic:
+                    sharpened = new_state
+        sharpened = BinaryNecklace(sharpened)
+
         for name, shape in scales.items():
-            if swapped == shape:
-                new_shape, new_color = name, get_transposition(tuple(swapped), tuple(shape))
+            if sharpened == shape:
+                new_shape, new_color = name, get_transposition(tuple(sharpened), tuple(shape))
                 return ChromaticNecklace(new_shape, new_color)
 
 
 def main():
-    chrome = ChromaticNecklace('major', 0)
+    chrome = ChromaticNecklace('harmonic_major', 0)
     print('Initial necklace:')
     print(chrome)
     print('==================================')
     print('Adjacent necklaces:')
-    for idx in range(7):
-        if chrome.movable(idx):
+    for idx in range(12):
+        if chrome.is_movable(idx):
             print(f'move {idx}')
             print(chrome.move(idx))
 
