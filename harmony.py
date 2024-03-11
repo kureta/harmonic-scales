@@ -46,13 +46,13 @@ class BinaryNecklace(tuple):
 # For now, we will ignore improper scales. Our objects have a shape and a color. Scale families represent shapes.
 # Base pitch of the scale represent color (index of its first tone, or its rotation, transposition).
 scales = {
-    'major': BinaryNecklace(major),
-    'melodic_minor': BinaryNecklace(melodic_minor),
-    'harmonic_major': BinaryNecklace(harmonic_major),
-    'harmonic_minor': BinaryNecklace(harmonic_minor),
-    'wholetone': BinaryNecklace(wholetone),
-    'augmented': BinaryNecklace(augmented),
-    'octatonic': BinaryNecklace(octatonic),
+    "major": BinaryNecklace(major),
+    "melodic_minor": BinaryNecklace(melodic_minor),
+    "harmonic_major": BinaryNecklace(harmonic_major),
+    "harmonic_minor": BinaryNecklace(harmonic_minor),
+    "wholetone": BinaryNecklace(wholetone),
+    "augmented": BinaryNecklace(augmented),
+    "octatonic": BinaryNecklace(octatonic),
 }
 
 
@@ -66,7 +66,7 @@ class ChromaticNecklace:
         self.color = color
 
     def __repr__(self):
-        return f'{self.name} ({self.color}): {self.state}'
+        return f"{self.name} ({self.color}): {self.state}"
 
     def sharpened_state(self, idx):
         state = self.state.copy()
@@ -86,7 +86,7 @@ class ChromaticNecklace:
         is_harmonic = BinaryNecklace(sharpened).is_harmonic
         # try adding or removing a note
         if not is_harmonic:
-            for i, v in enumerate(sharpened):
+            for i, _ in enumerate(sharpened):
                 if i == idx or i == (idx + 1) % 12:
                     continue
                 if BinaryNecklace(self.flipped_state(i, sharpened)).is_harmonic:
@@ -101,7 +101,7 @@ class ChromaticNecklace:
         is_harmonic = BinaryNecklace(sharpened).is_harmonic
         # try adding or removing a note
         if not is_harmonic:
-            for i, v in enumerate(sharpened):
+            for i, _ in enumerate(sharpened):
                 if i == idx or i == (idx + 1) % 12:
                     continue
                 new_state = self.flipped_state(i, sharpened)
@@ -116,16 +116,16 @@ class ChromaticNecklace:
 
 
 def main():
-    chrome = ChromaticNecklace('harmonic_major', 0)
-    print('Initial necklace:')
+    chrome = ChromaticNecklace("wholetone", 0)
+    print("Initial necklace:")
     print(chrome)
-    print('==================================')
-    print('Adjacent necklaces:')
+    print("==================================")
+    print("Adjacent necklaces:")
     for idx in range(12):
         if chrome.is_movable(idx):
-            print(f'move {idx}')
+            print(f"move {idx}")
             print(chrome.move(idx))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
